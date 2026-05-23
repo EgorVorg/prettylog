@@ -1,0 +1,24 @@
+[project]
+name = "prettylog"
+version = "0.1.0"
+description = "Простая библиотека логирования на Python, написанная с нуля"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+dependencies = []
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-v --tb=short"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.14",
+]
+test = [
+    "pytest>=9.0.3",
+]

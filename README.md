@@ -1,0 +1,174 @@
+# prettylog
+
+Простая библиотека логирования на Python, написанная с нуля. Без обёрток над `logging` из стандартной библиотеки — только своя реализация, чтобы понять, как работают хендлеры и форматтеры под капотом.
+
+## Структура проекта (src layout)
+
+```
+prettylog/
+├── src/
+│   └── prettylog/           # Исходный код
+│       ├── __init__.py      # get_logger(name, level, handlers)
+│       ├── logger.py        # LogLevel, LogRecord, Logger
+│       ├── handlers.py      # BaseHandler, ConsoleHandler, FileHandler
+│       ├── formatters.py    # TextFormatter, JsonFormatter
+│       └── config.py        # load_from_dict(config_dict)
+├── tests/
+│   └── prettylog/           # Тесты
+│       ├── test_logger.py
+│       ├── test_handlers.py
+│       ├── test_formatters.py
+│       ├── test_config.py
+│       └── test_init.py
+├── examples/                # Примеры использования
+│   ├── basic_usage.py
+│   ├── config_example.py
+│   ├── bind_example.py
+│   └── rotation_example.py
+├── pyproject.toml           # Конфигурация проекта
+└── README.md                # Этот файл
+```
+
+## Установка
+
+```bash
+# Просто скопируй папку prettylog в свой проект
+# Или установи в dev-режиме:
+pip install -e .
+
+# Никаких зависимостей (кроме опционального colorama для Windows)
+```
+
+## Быстрый старт
+
+```python
+from prettylog import get_logger
+
+logger = get_logger("myapp", level="INFO")
+logger.info("Сервер запущен")
+logger.debug("Это не выведется — уровень INFO выше DEBUG")
+```
+
+## Принцип работы (цепочка вызовов)
+
+```
+logger.info("hello")
+  └── Logger._log(INFO, "hello")
+        ├── if level < self.level: return   # фильтрация
+        ├── Создаёт LogRecord
+        └── Для каждого handler в self.handlers:
+              handler.emit(record)
+                ├── formatted = self.formatter.format(record)
+                └── self.write(formatted)
+```
+
+**Ключевой принцип**: Logger не знает куда писать. Handler не знает в каком формате. Formatter не знает куда писать. Каждый делает свою работу — это **разделение ответственности** и **полиморфизм**.
+
+## Уровни логирования
+
+| Уровень  | Значение | Цвет в консоли |
+|----------|----------|----------------|
+| DEBUG    | 10       | Голубой (cyan) |
+| INFO     | 20       | Зелёный        |
+| WARNING  | 30       | Жёлтый         |
+| ERROR    | 40       | Красный        |
+| CRITICAL | 50       | Жирный красный |
+
+## Примеры
+
+### Базовое логирование
+
+```python
+from prettylog import get_logger
+
+logger = get_logger("app", level="DEBUG")
+logger.debug("Отладочная информация")
+logger.info("Сервер стартовал")
+logger.warning("Мало памяти")
+logger.error("Ошибка подключения")
+logger.critical("Критическая ошибка")
+```
+
+### Несколько хендлеров (консоль + файл)
+
+```python
+from prettylog import Logger, LogLevel, ConsoleHandler, FileHandler
+from prettylog.formatters import TextFormatter, JsonFormatter
+
+logger = Logger(
+    name="app",
+    level=LogLevel.DEBUG,
+    handlers=[
+        ConsoleHandler(formatter=TextFormatter()),         # цветной текст
+        FileHandler("app.log", formatter=JsonFormatter())  # JSON в файл
+    ]
+)
+logger.info("Пользователь вошёл")
+```
+
+### Контекст через bind()
+
+```python
+from prettylog import get_logger
+
+logger = get_logger("api")
+user_logger = logger.bind(user_id=42, ip="192.168.1.1")
+user_logger.info("Авторизация")  # | user_id=42 ip=192.168.1.1
+```
+
+### Конфигурация через словарь
+
+```python
+from prettylog import load_from_dict
+
+config = {
+    "name": "myapp",
+    "level": "INFO",
+    "handlers": [
+        {"type": "console", "formatter": "text"},
+        {"type": "file", "filename": "app.log", "formatter": "json"}
+    ]
+}
+logger = load_from_dict(config)
+```
+
+## Запуск тестов
+
+```bash
+# Установка зависимостей
+pip install -e ".[dev]"
+
+# Запуск
+pytest
+
+# Или напрямую
+python -m pytest tests/ -v
+```
+
+## Запуск примеров
+
+```bash
+# Базовое логирование
+PYTHONPATH=src python examples/basic_usage.py
+
+# Конфигурация через dict
+PYTHONPATH=src python examples/config_example.py
+
+# Контекст через bind()
+PYTHONPATH=src python examples/bind_example.py
+
+# Ротация логов
+PYTHONPATH=src python examples/rotation_example.py
+```
+
+## Архитектурные принципы
+
+1. **Разделение ответственности**: Logger → Handler → Formatter
+2. **Полиморфизм**: ConsoleHandler и FileHandler взаимозаменяемы
+3. **Композиция вместо наследования**: Handler содержит Formatter
+4. **Неизменяемость**: `bind()` возвращает новый Logger
+5. **Простота**: 5 файлов, нет магии через стек вызовов
+
+## Лицензия
+
+MIT

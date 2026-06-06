@@ -60,4 +60,12 @@ def get_logger(
     Returns:
         Настроенный экземпляр Logger.
     """
-    ...
+    # Преобразуем строковый уровень (например, "INFO") в LogLevel
+    log_level = LogLevel.from_string(level)
+
+    # Если хендлеры не переданы — создаём один ConsoleHandler с TextFormatter
+    if handlers is None:
+        handlers = [ConsoleHandler(formatter=TextFormatter())]
+
+    # Создаём и возвращаем готовый Logger
+    return Logger(name=name, level=log_level, handlers=handlers)

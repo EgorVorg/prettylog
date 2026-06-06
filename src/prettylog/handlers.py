@@ -1,10 +1,13 @@
 """Хендлеры: куда писать логи (консоль, файл, и т.д.)."""
 
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from typing import TextIO
+import os
+import sys
 
-from prettylog.formatters import BaseFormatter
-from prettylog.logger import LogRecord
+from prettylog.formatters import BaseFormatter, TextFormatter
 
 
 class BaseHandler(ABC):
@@ -20,7 +23,10 @@ class BaseHandler(ABC):
             formatter: Форматтер для преобразования записи в строку.
                        Если None — используется TextFormatter() по умолчанию.
         """
-        ...
+        if formatter is None:
+            self.formatter = TextFormatter()
+        else:
+            self.formatter = formatter
 
     def emit(self, record: LogRecord) -> None:
         """Шаблонный метод: форматирует запись и пишет куда нужно.
@@ -29,7 +35,8 @@ class BaseHandler(ABC):
         1. formatted = self.formatter.format(record)
         2. self.write(formatted)
         """
-        ...
+        formatted = self.formatter.format(record)
+        self.write(formatted)
 
     @abstractmethod
     def write(self, message: str) -> None:
@@ -59,15 +66,25 @@ class ConsoleHandler(BaseHandler):
 
         Если установлен colorama — вызываем init() для кроссплатформенности.
         """
-        ...
+        try:
+            import colorama
+
+            colorama.init()
+        except ImportError:
+            pass
+
+        super().__init__(formatter)
 
     def emit(self, record: LogRecord) -> None:
         """Форматирует, оборачивает в цвет уровня и пишет в stdout."""
-        ...
+        color = self._COLORS.get(record.level.value, "")
+        formatted = self.formatter.format(record)
+        colored_message = f"{color}{formatted}{self._RESET}"
+        self.write(colored_message)
 
     def write(self, message: str) -> None:
         """Пишет строку в stdout с переносом и сбросом буфера."""
-        ...
+        print(message, flush=True)
 
 
 class FileHandler(BaseHandler):
@@ -91,15 +108,22 @@ class FileHandler(BaseHandler):
             max_bytes: Максимальный размер файла в байтах перед ротацией.
             backup_count: Сколько резервных копий хранить.
         """
-        ...
+        self.filename = filename
+        self.max_bytes = max_bytes
+        self.backup_count = backup_count
+        self._file = self._open()
+
+        super().__init__(formatter)
 
     def _open(self) -> TextIO:
         """Открывает файл в режиме append с кодировкой utf-8."""
-        ...
+        return open(self.filename, "a", encoding="utf-8")
 
     def _should_rotate(self) -> bool:
         """Проверить, нужна ли ротация (файл >= max_bytes)."""
-        ...
+        if not os.path.exists(self.filename):
+            return False
+        return os.path.getsize(self.filename) >= self.max_bytes
 
     def _rotate(self) -> None:
         """Выполнить ротацию файлов:
@@ -109,16 +133,40 @@ class FileHandler(BaseHandler):
         3. Переименовать текущий файл → .1.
         4. Открыть новый пустой файл.
         """
-        ...
+        # туду закрыть текущий файл
+
+        oldest_backup = f"{self.filename}.{self.backup_count}"  # удаляем старый бекап
+        if os.path.exists(oldest_backup):
+            os.remove(oldest_backup)
+
+        # туду сдвинуть существующие бекапы
+        for i in range(self.backup_count - 1, 0, -1):
+            old_backup_name = f"{self.filename}.{i}"
+            new_backup_name = f"{self.filename}.{i + 1}"
+            if os.path.exists(old_backup_name):
+                os.rename(old_backup_name, new_backup_name)
+
+        if os.path.exists(self.filename):
+            os.rename(self.filename, f"{self.filename}.1")
 
     def write(self, message: str) -> None:
         """Проверяет необходимость ротации и пишет в файл (без цветов)."""
-        ...
+        if self._should_rotate():
+            self._rotate()
+
+        f = self._file
+        f.write(message + "\n")
+        f.flush()
 
     def close(self) -> None:
         """Закрывает файловый дескриптор."""
-        ...
+        if self._file and not self._file.closed:
+            self._file.close()
+            self._file = None
 
     def __del__(self) -> None:
         """Подстраховка: закрыть файл при уничтожении хендлера."""
-        ...
+        try:
+            self.close()
+        except Exception:
+            pass

@@ -16,8 +16,8 @@ class LogLevel(IntEnum):
     ERROR = 40
     CRITICAL = 50
 
-    @classmethod
-    def from_string(cls, name: str) -> LogLevel:
+    @classmethod # работает с целым классом cls, а не экземпляром LogLevel.INFO
+    def from_string(cls, name: str) -> "LogLevel":
         """Преобразует строку в LogLevel (регистронезависимо).
 
         Args:
@@ -28,12 +28,12 @@ class LogLevel(IntEnum):
         """
         name_upper = name.upper()
         if name_upper not in cls.__members__:
-            raise ValueError(f"Unknown log level: {name!r}")
-        return cls[name_upper]
+            raise ValueError(f"Unknown log level: {name}")
+        return cls[name_upper] # cls["INFO"] вернет LogLevel.INFO
 
 
-@dataclass
-class LogRecord:
+@dataclass # питон сам делает всякие иниты
+class LogRecord: # конверт для одного сообщения лога
     """Одна запись лога — неизменяемая структура с данными."""
 
     name: str
@@ -41,7 +41,7 @@ class LogRecord:
     message: str
     module: str
     timestamp: datetime
-    extra: dict = field(default_factory=dict)
+    extra: dict = field(default_factory=dict) # пустой словарь для каждого LogRecord
 
 
 class Logger:
@@ -100,7 +100,7 @@ class Logger:
         ...
         self._log(LogLevel.CRITICAL, msg)
 
-    def _log(self, level: LogLevel, msg: str) -> None:
+    def _log(self, level: LogLevel, msg: str) -> None: # _ — внутренний метод
         """Внутренний метод обработки сообщения.
 
         Порядок работы:
@@ -136,7 +136,7 @@ class Logger:
         for handler in self.handlers:
             handler.emit(record)
 
-    def bind(self, **kwargs: object) -> "Logger":
+    def bind(self, **kwargs: object) -> "Logger": # логгер с доп. данными, не трогает старый, как копия документа
         """Создаёт новый Logger с замёрженными extra-полями.
 
         Исходный логгер не модифицируется — чистая функция.
@@ -149,10 +149,22 @@ class Logger:
         # Подсказка: сделай копию self.extra и обнови через .update(kwargs)
         # Затем создай новый Logger с теми же параметрами, но новым extra
         ...
-        new_extra = dict(self.extra)
-        new_extra.update(kwargs)
+        new_extra = dict(self.extra) # копирует старые экстра
+        new_extra.update(kwargs) # добавляет новые. Хз что за kwargs, не понял
 
-        return Logger(
+        # self.name = name в __init__ — ПРИНИМАЕМ параметр от юзера и КЛАДЕМ в объект
+        # name=self.name при создании нового объекта — БЕРЕМ из текущего объекта и ПЕРЕДАЕМ как параметр
+
+        # __init__ (конструктор):
+            # сделай логгер с именем hui
+            # name="hui" приходит в параметр
+            # self.name = name — сохраняем hui внутрь
+        # bind (копия):
+            # у текущего логгера есть self.name = "hui"
+            # берем self.name 
+            # name=self.name — передаем в конструктор новому
+
+        return Logger( # новый логгер
             name=self.name,
             level=self.level,
             handlers=self.handlers,

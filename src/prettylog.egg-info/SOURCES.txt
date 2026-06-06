@@ -1,0 +1,11 @@
+README.md
+pyproject.toml
+src/prettylog/__init__.py
+src/prettylog/config.py
+src/prettylog/formatters.py
+src/prettylog/handlers.py
+src/prettylog/logger.py
+src/prettylog.egg-info/PKG-INFO
+src/prettylog.egg-info/SOURCES.txt
+src/prettylog.egg-info/dependency_links.txt
+src/prettylog.egg-info/top_level.txt

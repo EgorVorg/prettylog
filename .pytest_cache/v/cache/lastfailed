@@ -1,0 +1,7 @@
+{
+  "tests/prettylog/test_config.py": true,
+  "tests/prettylog/test_formatters.py": true,
+  "tests/prettylog/test_handlers.py": true,
+  "tests/prettylog/test_init.py": true,
+  "tests/prettylog/test_logger.py": true
+}

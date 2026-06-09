@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Виртуальные окружения
+.venv/
+venv/
+ENV/
+env/
+
+# Окружение и секреты (очень важно!)
+.env
+.env.local
+*.log
+
+# Инструменты сборки (если будете делать из этого пакет)
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Тестирование и покрытие кода
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# MyPy (проверка типов)
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Файлы Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+ $RECYCLE.BIN/
+
+# VS Code (Опционально)
+# Если вы не хотите пушить настройки вашего редактора в репозиторий,
+# раскомментируйте строку ниже:
+# .vscode/

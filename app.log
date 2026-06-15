@@ -1,0 +1,3 @@
+{"timestamp": "2026-06-11T16:44:22.866417", "level": "INFO", "logger": "config_app", "message": "Привет из конфигурированного логгера!", "extra": {}}
+{"timestamp": "2026-06-11T16:44:22.866631", "level": "DEBUG", "logger": "config_app", "message": "Отладочное сообщение в JSON", "extra": {}}
+{"timestamp": "2026-06-11T16:44:22.866755", "level": "WARNING", "logger": "config_app", "message": "Предупреждение тоже в JSON", "extra": {}}

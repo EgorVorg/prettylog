@@ -133,7 +133,9 @@ class FileHandler(BaseHandler):
         3. Переименовать текущий файл → .1.
         4. Открыть новый пустой файл.
         """
-        # туду закрыть текущий файл
+
+        if self._file:
+            self._file.close()
 
         oldest_backup = f"{self.filename}.{self.backup_count}"  # удаляем старый бекап
         if os.path.exists(oldest_backup):
@@ -148,6 +150,8 @@ class FileHandler(BaseHandler):
 
         if os.path.exists(self.filename):
             os.rename(self.filename, f"{self.filename}.1")
+
+        self._file = self._open()
 
     def write(self, message: str) -> None:
         """Проверяет необходимость ротации и пишет в файл (без цветов)."""
